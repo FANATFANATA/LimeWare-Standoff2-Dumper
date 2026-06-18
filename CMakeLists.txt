@@ -29,8 +29,6 @@ add_executable(${PROJECT_NAME}
         ${UTILS}
         ${DUMPER}
         ${KITTYMEMORYEX}
-        Utils/il2cpp-classes_newv.h
-        Utils/2019.4.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE

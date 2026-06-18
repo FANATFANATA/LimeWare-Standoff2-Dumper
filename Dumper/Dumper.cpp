@@ -52,75 +52,77 @@ void Dumper::dump(const char *path) {
 
 
     for (Il2Cpp::Class *klass : m_vecClasses) {
-        dump << dumpClass(klass) << std::endl;//
+        dump << dumpClass(klass) << std::endl;
     }
 }
 
 std::string Dumper::getTypeIndexStr(Il2Cpp::Type *type) {
     int8_t type_index = g.il2cpp->getTypeIndex(type);
+    std::string result;
+    if (g.il2cpp->getIsByref(type)) {
+        const int16_t attrs = g.il2cpp->getAttrs(type);
+        if (attrs & 0x2 && !(attrs & 0x1)) {
+            result += "out ";
+        }
+        else if (!(attrs & 0x2) && attrs & 0x1) {
+            result += "in ";
+        } else {
+            result += "ref ";
+        }
+
+    }
     switch (type_index) {
         case 0x00: break;
-        case 0x01: return "void";
-        case 0x02: return "bool";
-        case 0x03: return "char";
-        case 0x04: return "byte";
-        case 0x05: return "ubyte";
-        case 0x06: return "short";
-        case 0x07: return "ushort";
-        case 0x08: return "int";
-        case 0x09: return "uint";
-        case 0x0a: return "long";
-        case 0x0b: return "ulong";
-        case 0x0c: return "float";
-        case 0x0d: return "double";
-        case 0x0e: return "string";
-        case 0x0f: return "void*";
-        case 0x18: return "IntPtr";
-        case 0x19: return "UIntPtr";
-        case 0x1c: return "object";
+        case 0x01: return result + "void";
+        case 0x02: return result + "bool";
+        case 0x03: return result + "char";
+        case 0x04: return result + "byte";
+        case 0x05: return result + "ubyte";
+        case 0x06: return result + "short";
+        case 0x07: return result + "ushort";
+        case 0x08: return result + "int";
+        case 0x09: return result + "uint";
+        case 0x0a: return result + "long";
+        case 0x0b: return result + "ulong";
+        case 0x0c: return result + "float";
+        case 0x0d: return result + "double";
+        case 0x0e: return result + "string";
+        case 0x0f: return result + "void*";
+        case 0x18: return result + "IntPtr";
+        case 0x19: return result + "UIntPtr";
+        case 0x1c: return result + "object";
         case 0x1e:
-        case 0x13: return "T";
+        case 0x13: return result + "T";
         case 0x11:
         case 0x12: {
             Il2Cpp::Class *klass = g.il2cpp->getClassFromType(type);
             if (g.memory->isPtrValid(reinterpret_cast<uintptr_t>(klass))) {
-                if (g.il2cpp->getIsByref(type)) {
-                    int16_t attrs = g.il2cpp->getAttrs(type);
-                    if (attrs & 0x2 && !(attrs & 0x1)) {
-                        return "out " + std::string(g.il2cpp->getClassName(klass));
-                    }
-                    if (!(attrs & 0x2) && attrs & 0x1) {
-                        return "in " + std::string(g.il2cpp->getClassName(klass));
-                    }
-                    return "ref " + std::string(g.il2cpp->getClassName(klass));
-                }
-                return g.il2cpp->getClassName(klass);
+                return result + g.il2cpp->getClassName(klass);
             }
-            return "object";
+            return result + "object";
         }
         case 0x14: {
             Il2Cpp::ArrayType *array_type = g.il2cpp->getArrayType(type);
             if (g.memory->isPtrValid(reinterpret_cast<uintptr_t>(array_type))) {
                 Il2Cpp::Type *root_type = g.il2cpp->getTypeFromArrayType(array_type);
                 if (g.memory->isPtrValid(reinterpret_cast<uintptr_t>(root_type))) {
-                    return getTypeIndexStr(root_type) + "[]";
+                    return result + getTypeIndexStr(root_type) + "[]";
                 }
             }
-            return "object[]";
+            return result + "object[]";
         }
-            break;
         case 0x1D: {
             Il2Cpp::ArrayType *array_type = g.il2cpp->getArrayType(type);
             if (g.memory->isPtrValid(reinterpret_cast<uintptr_t>(array_type))) {
-                return getTypeIndexStr(array_type) + "[]";
+                return result + getTypeIndexStr(array_type) + "[]";
             }
-            return "object[]";
+            return result + "object[]";
         }
-        case 0x15: return g.il2cpp->getTypeName(type);
+        case 0x15: return result + g.il2cpp->getTypeName(type);
         default:
             break;
     }
-    return "object";
+    return result + "object";
 }
 
 std::string Dumper::getFieldAccessStr(Il2Cpp::Field *field) {
@@ -249,7 +251,6 @@ std::string Dumper::dumpField(Il2Cpp::Field *field, bool is_enum, bool is_struct
         result += !getFieldModificatorStr(field).empty() ? getFieldModificatorStr(field) + " " : "";
         result += getTypeIndexStr(type) + " ";
         result += std::string(g.il2cpp->getFieldName(field));
-
         if (g.il2cpp->getAttrs(type) & 0x40) {
             result += " = ";
             Il2Cpp::Type *default_type = nullptr;
@@ -463,8 +464,7 @@ std::string Dumper::dumpClass(Il2Cpp::Class *klass) {
                     }
                 }
             }
-
-            if (g.il2cpp->getInterfaces(klass).size() > 0 && result.find(" : ") == std::string::npos) {
+            if (!g.il2cpp->getInterfaces(klass).empty() && result.find(" : ") == std::string::npos) {
                 result += " : ";
             }
 
@@ -500,7 +500,6 @@ std::string Dumper::dumpClass(Il2Cpp::Class *klass) {
             for (Il2Cpp::Property *property : g.il2cpp->getProperties(klass)) {
                 result += "\t" + dumpProperty(property) + "\n";
             }
-
             result += !g.il2cpp->getMethods(klass).empty() > 0 ? "\n\t// Methods\n\n" : "";
 
             for (int method_index = 0; method_index < g.il2cpp->getMethods(klass).size(); method_index++) {

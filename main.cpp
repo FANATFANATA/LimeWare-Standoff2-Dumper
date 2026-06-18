@@ -19,6 +19,7 @@ void __attribute__((constructor)) entry_point() {
             g.log->info("Dumping...");
             g.dumper->dump("/storage/emulated/0/Android/obb/com.axlebolt.standoff2/");
             g.log->info("Dumped!");
+            exit(0);
         }
     }).detach();
 }

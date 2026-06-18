@@ -249,7 +249,7 @@ Il2Cpp::Type *Il2CppApi::getRootType(Il2Cpp::Type *type) {
 }
 
 bool Il2CppApi::getIsByref(Il2Cpp::Type *type) {
-	return *reinterpret_cast<uint32_t*>(reinterpret_cast<uintptr_t>(type) + g.memory->offsets.type_is_byref) == 1;
+	return getTypeName(type).find("&") != std::string::npos;
 }
 
 std::string Il2CppApi::getTypeName(Il2Cpp::Type *type, bool simple) {
