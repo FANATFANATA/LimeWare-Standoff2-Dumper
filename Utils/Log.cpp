@@ -4,6 +4,7 @@
 
 #include "Log.h"
 
+#include <cstdarg>
 #include <iostream>
 #include <android/log.h>
 
@@ -11,10 +12,10 @@ void Log::info(const char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
 
-    __android_log_vprint(ANDROID_LOG_INFO, "[LimeWare]", fmt, args);
-
     va_list args_copy;
     va_copy(args_copy, args);
+
+    __android_log_vprint(ANDROID_LOG_INFO, "[LimeWare]", fmt, args);
 
     char buffer[1024];
     vsnprintf(buffer, sizeof(buffer), fmt, args_copy);
@@ -28,10 +29,10 @@ void Log::debug(const char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
 
-    __android_log_vprint(ANDROID_LOG_DEBUG, "[LimeWare]", fmt, args);
-
     va_list args_copy;
     va_copy(args_copy, args);
+
+    __android_log_vprint(ANDROID_LOG_DEBUG, "[LimeWare]", fmt, args);
 
     char buffer[1024];
     vsnprintf(buffer, sizeof(buffer), fmt, args_copy);
@@ -45,10 +46,10 @@ void Log::error(const char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
 
-    __android_log_vprint(ANDROID_LOG_ERROR, "[LimeWare]", fmt, args);
-
     va_list args_copy;
     va_copy(args_copy, args);
+
+    __android_log_vprint(ANDROID_LOG_ERROR, "[LimeWare]", fmt, args);
 
     char buffer[1024];
     vsnprintf(buffer, sizeof(buffer), fmt, args_copy);
@@ -62,10 +63,10 @@ void Log::warning(const char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
 
-    __android_log_vprint(ANDROID_LOG_WARN, "[LimeWare]", fmt, args);
-
     va_list args_copy;
     va_copy(args_copy, args);
+
+    __android_log_vprint(ANDROID_LOG_WARN, "[LimeWare]", fmt, args);
 
     char buffer[1024];
     vsnprintf(buffer, sizeof(buffer), fmt, args_copy);
@@ -79,10 +80,10 @@ void Log::fatal(const char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
 
-    __android_log_vprint(ANDROID_LOG_FATAL, "[LimeWare]", fmt, args);
-
     va_list args_copy;
     va_copy(args_copy, args);
+
+    __android_log_vprint(ANDROID_LOG_FATAL, "[LimeWare]", fmt, args);
 
     char buffer[1024];
     vsnprintf(buffer, sizeof(buffer), fmt, args_copy);

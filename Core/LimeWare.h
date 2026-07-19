@@ -30,6 +30,6 @@ public:
     bool initialize(bool inject);
 };
 
-extern LimeWare g;
+LimeWare& g();
 
 #endif //LIMEWARE_STANDOFF2_DUMPER_LIMEWARE_H
