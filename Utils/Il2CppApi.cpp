@@ -1,12 +1,66 @@
-//
-// Created by alexandr on 27.04.2026.
-//
-
 #include "Il2CppApi.h"
 
 #include "LimeWare.h"
 
 bool Il2CppApi::initialize() {
+    if (g().memory->offsets.assembly_open == UINTPTR_MAX) {
+        g().log->error("Il2CppApi: assembly_open offset not found");
+        return false;
+    }
+    if (g().memory->offsets.assembly_get_image == UINTPTR_MAX) {
+        g().log->error("Il2CppApi: assembly_get_image offset not found");
+        return false;
+    }
+    if (g().memory->offsets.image_get_assembly_type_handle == UINTPTR_MAX) {
+        g().log->error("Il2CppApi: image_get_assembly_type_handle offset not found");
+        return false;
+    }
+    if (g().memory->offsets.handle_get_type_from_handle == UINTPTR_MAX) {
+        g().log->error("Il2CppApi: handle_get_type_from_handle offset not found");
+        return false;
+    }
+    if (g().memory->offsets.class_get_name == UINTPTR_MAX) {
+        g().log->error("Il2CppApi: class_get_name offset not found");
+        return false;
+    }
+    if (g().memory->offsets.class_get_fields == UINTPTR_MAX) {
+        g().log->error("Il2CppApi: class_get_fields offset not found");
+        return false;
+    }
+    if (g().memory->offsets.class_get_properties == UINTPTR_MAX) {
+        g().log->error("Il2CppApi: class_get_properties offset not found");
+        return false;
+    }
+    if (g().memory->offsets.class_get_methods == UINTPTR_MAX) {
+        g().log->error("Il2CppApi: class_get_methods offset not found");
+        return false;
+    }
+    if (g().memory->offsets.class_type == UINTPTR_MAX) {
+        g().log->error("Il2CppApi: class_type offset not found");
+        return false;
+    }
+    if (g().memory->offsets.class_get_parent == UINTPTR_MAX) {
+        g().log->error("Il2CppApi: class_get_parent offset not found");
+        return false;
+    }
+    if (g().memory->offsets.type_get_type == UINTPTR_MAX) {
+        g().log->error("Il2CppApi: type_get_type offset not found");
+        return false;
+    }
+    if (g().memory->offsets.type_get_class_from_type == UINTPTR_MAX) {
+        g().log->error("Il2CppApi: type_get_class_from_type offset not found");
+        return false;
+    }
+    if (g().memory->offsets.type_get_data == UINTPTR_MAX) {
+        g().log->error("Il2CppApi: type_get_data offset not found");
+        return false;
+    }
+    if (g().memory->offsets.type_get_name == UINTPTR_MAX) {
+        g().log->error("Il2CppApi: type_get_name offset not found");
+        return false;
+    }
+
+    g().log->info("Il2CppApi initialized successfully");
     return true;
 }
 

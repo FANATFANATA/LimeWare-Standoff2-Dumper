@@ -1,7 +1,3 @@
-//
-// Created by alexandr on 27.04.2026.
-//
-
 #include "Memory.h"
 
 #include <cinttypes>
@@ -17,6 +13,7 @@
 
 #include "LimeWare.h"
 #include "Assembler.h"
+#include "Il2CppApi.h"
 
 static uintptr_t safeFront(const std::vector<uintptr_t>& v) {
     return v.empty() ? UINTPTR_MAX : v.front();
@@ -82,7 +79,6 @@ std::vector<uintptr_t> Memory::ModuleInfo::findPattern(const std::string& patter
 }
 
 bool Memory::initialize() {
-
     m_libunity = getModuleInfo("libunity.so");
 
     getModuleInfo("libunity.so", [&](const ModuleInfo &module) {
@@ -109,65 +105,11 @@ bool Memory::initialize() {
             g().log->info("[%s] %3d%% | Finished: %s (0x%lX)", bar.c_str(), percent, name, (unsigned long)address);
         };
 
-        // --- Блок Assemblies ---
-        if (offsets.assemblies_start == UINTPTR_MAX) offsets.assemblies_start = findAssembliesStart(module); log_progress("assemblies_start", offsets.assemblies_start);
-        if (offsets.assemblies_end == UINTPTR_MAX) offsets.assemblies_end = findAssembliesEnd(module); log_progress("assemblies_end", offsets.assemblies_end);
+        findPatternBasedOffsets(module, log_progress);
 
-        // --- Блок Assembly ---
-        if (offsets.assembly_open == UINTPTR_MAX) offsets.assembly_open = findAssemblyOpen(module); log_progress("assembly_open", offsets.assembly_open);
-        if (offsets.assembly_name == UINTPTR_MAX) offsets.assembly_name = findAssemblyName(module); log_progress("assembly_name", offsets.assembly_name);
-        if (offsets.assembly_get_image == UINTPTR_MAX) offsets.assembly_get_image = findAssemblyGetImage(module); log_progress("assembly_get_image", offsets.assembly_get_image);
+        g().il2cpp->initialize();
 
-        // --- Блок Image & Handle ---
-        if (offsets.image_type_count == UINTPTR_MAX) offsets.image_type_count = findImageTypeCount(module); log_progress("image_type_count", offsets.image_type_count);
-        if (offsets.image_get_assembly_type_handle == UINTPTR_MAX) offsets.image_get_assembly_type_handle = findGetAssemblyTypeHandle(module); log_progress("image_get_assembly_type_handle", offsets.image_get_assembly_type_handle);
-        if (offsets.handle_get_type_from_handle == UINTPTR_MAX) offsets.handle_get_type_from_handle = findGetTypeFromHandle(module); log_progress("handle_get_type_from_handle", offsets.handle_get_type_from_handle);
-        if (offsets.image_name == UINTPTR_MAX) offsets.image_name = findImageName(module); log_progress("image_name", offsets.image_name);
-
-        // --- Блок Class ---
-        if (offsets.class_get_name == UINTPTR_MAX) offsets.class_get_name = findClassGetName(module); log_progress("class_get_name", offsets.class_get_name);
-        if (offsets.class_namespace == UINTPTR_MAX) offsets.class_namespace = findClassNamespace(module); log_progress("class_namespace", offsets.class_namespace);
-        if (offsets.class_get_parent == UINTPTR_MAX) offsets.class_get_parent = findClassGetParent(module); log_progress("class_get_parent", offsets.class_get_parent);
-        if (offsets.class_get_fields == UINTPTR_MAX) offsets.class_get_fields = findClassGetFields(module); log_progress("class_get_fields", offsets.class_get_fields);
-        if (offsets.class_get_properties == UINTPTR_MAX) offsets.class_get_properties = findClassGetProperties(module); log_progress("class_get_properties", offsets.class_get_properties);
-        if (offsets.class_get_methods == UINTPTR_MAX) offsets.class_get_methods = findClassGetMethods(module); log_progress("class_get_methods", offsets.class_get_methods);
-        if (offsets.class_type == UINTPTR_MAX) offsets.class_type = findClassType(module); log_progress("class_type", offsets.class_type);
-        if (offsets.class_get_enum_basetype == UINTPTR_MAX) offsets.class_get_enum_basetype = findClassGetEnumBasetype(module); log_progress("class_get_enum_basetype", offsets.class_get_enum_basetype);
-        if (offsets.class_get_flags == UINTPTR_MAX) offsets.class_get_flags = findClassGetFlags(module); log_progress("class_get_flags", offsets.class_get_flags);
-        if (offsets.class_get_interfaces == UINTPTR_MAX) offsets.class_get_interfaces = findClassGetInterfaces(module); log_progress("class_get_interfaces", offsets.class_get_interfaces);
-        if (offsets.class_get_declaring_type == UINTPTR_MAX) offsets.class_get_declaring_type = findClassGetDeclaringType(module); log_progress("class_get_declaring_type", offsets.class_get_declaring_type);
-        if (offsets.class_get_is_generic == UINTPTR_MAX) offsets.class_get_is_generic = findClassGetIsGeneric(module); log_progress("class_get_is_generic", offsets.class_get_is_generic);
-
-        // --- Блок Field ---
-        if (offsets.field_get_name == UINTPTR_MAX) offsets.field_get_name = findFieldGetName(module); log_progress("field_get_name", offsets.field_get_name);
-        if (offsets.field_get_offset == UINTPTR_MAX) offsets.field_get_offset = findFieldGetOffset(module); log_progress("field_get_offset", offsets.field_get_offset);
-        if (offsets.field_get_type == UINTPTR_MAX) offsets.field_get_type = findFieldGetType(module); log_progress("field_get_type", offsets.field_get_type);
-        if (offsets.field_get_default_value == UINTPTR_MAX) offsets.field_get_default_value = findFieldGetDefaultValue(module); log_progress("field_get_default_value", offsets.field_get_default_value);
-
-        // --- Блок Type ---
-        if (offsets.type_get_type == UINTPTR_MAX) offsets.type_get_type = findTypeGetType(module); log_progress("type_get_type", offsets.type_get_type);
-        if (offsets.type_attrs == UINTPTR_MAX) offsets.type_attrs = findTypeAttrs(module); log_progress("type_attrs", offsets.type_attrs);
-        if (offsets.type_attrs_shift == UINTPTR_MAX) offsets.type_attrs_shift = findTypeAttrsShift(module); log_progress("type_attrs_shift", offsets.type_attrs_shift);
-        if (offsets.type_get_class_from_type == UINTPTR_MAX) offsets.type_get_class_from_type = findTypeGetClassFromType(module); log_progress("type_get_class_from_type", offsets.type_get_class_from_type);
-        if (offsets.type_get_data == UINTPTR_MAX) offsets.type_get_data = findTypeGetData(module); log_progress("type_get_data", offsets.type_get_data);
-        if (offsets.type_get_name == UINTPTR_MAX) offsets.type_get_name = findTypeGetName(module); log_progress("type_get_name", offsets.type_get_name);
-
-        // --- Блок Property ---
-        if (offsets.property_name == UINTPTR_MAX) offsets.property_name = findPropertyName(module); log_progress("property_name", offsets.property_name);
-        if (offsets.property_get_method == UINTPTR_MAX) offsets.property_get_method = findPropertyGetMethod(module); log_progress("property_get_method", offsets.property_get_method);
-        if (offsets.property_set_method == UINTPTR_MAX) offsets.property_set_method = findPropertySetMethod(module); log_progress("property_set_method", offsets.property_set_method);
-
-        // --- Блок Method ---
-        if (offsets.method_name == UINTPTR_MAX) offsets.method_name = findMethodName(module); log_progress("method_name", offsets.method_name);
-        if (offsets.method_return_type == UINTPTR_MAX) offsets.method_return_type = findMethodReturnType(module); log_progress("method_return_type", offsets.method_return_type);
-        if (offsets.method_get_flags == UINTPTR_MAX) offsets.method_get_flags = findMethodGetFlags(module); log_progress("method_get_flags", offsets.method_get_flags);
-        if (offsets.method_parameters_count == UINTPTR_MAX) offsets.method_parameters_count = findMethodParametersCount(module); log_progress("method_parameters_count", offsets.method_parameters_count);
-        if (offsets.method_get_parameter == UINTPTR_MAX) offsets.method_get_parameter = findMethodGetParameter(module); log_progress("method_get_parameter", offsets.method_get_parameter);
-        if (offsets.method_pointer == UINTPTR_MAX) offsets.method_pointer = findMethodPointer(module); log_progress("method_pointer", offsets.method_pointer);
-        if (offsets.method_virtual_pointer == UINTPTR_MAX) offsets.method_virtual_pointer = findMethodVirtualPointer(module); log_progress("method_virtual_pointer", offsets.method_virtual_pointer);
-        if (offsets.method_slot == UINTPTR_MAX) offsets.method_slot = findMethodSlot(module); log_progress("method_slot", offsets.method_slot);
-        if (offsets.method_get_is_generic == UINTPTR_MAX) offsets.method_get_is_generic = findMethodGetIsGeneric(module); log_progress("method_get_is_generic", offsets.method_get_is_generic);
-        if (offsets.method_get_parameter_name == UINTPTR_MAX) offsets.method_get_parameter_name = findMethodGetParameterName(module); log_progress("method_get_parameter_name", offsets.method_get_parameter_name);
+        findIl2CppBasedOffsets(module, log_progress);
 
         g().log->info("=== OFFSETS ===");
         g().log->info("Assemblies start: %p", offsets.assemblies_start);
@@ -217,6 +159,62 @@ bool Memory::initialize() {
     });
 
     return m_libunity.isValid();
+}
+
+void Memory::findPatternBasedOffsets(const ModuleInfo &module, const std::function<void(const char*, uintptr_t)> &log_progress) {
+    if (offsets.assemblies_start == UINTPTR_MAX) offsets.assemblies_start = findAssembliesStart(module); log_progress("assemblies_start", offsets.assemblies_start);
+    if (offsets.assemblies_end == UINTPTR_MAX) offsets.assemblies_end = findAssembliesEnd(module); log_progress("assemblies_end", offsets.assemblies_end);
+
+    if (offsets.assembly_open == UINTPTR_MAX) offsets.assembly_open = findAssemblyOpen(module); log_progress("assembly_open", offsets.assembly_open);
+    if (offsets.assembly_name == UINTPTR_MAX) offsets.assembly_name = findAssemblyName(module); log_progress("assembly_name", offsets.assembly_name);
+    if (offsets.assembly_get_image == UINTPTR_MAX) offsets.assembly_get_image = findAssemblyGetImage(module); log_progress("assembly_get_image", offsets.assembly_get_image);
+
+    if (offsets.image_type_count == UINTPTR_MAX) offsets.image_type_count = findImageTypeCount(module); log_progress("image_type_count", offsets.image_type_count);
+    if (offsets.image_get_assembly_type_handle == UINTPTR_MAX) offsets.image_get_assembly_type_handle = findGetAssemblyTypeHandle(module); log_progress("image_get_assembly_type_handle", offsets.image_get_assembly_type_handle);
+    if (offsets.handle_get_type_from_handle == UINTPTR_MAX) offsets.handle_get_type_from_handle = findGetTypeFromHandle(module); log_progress("handle_get_type_from_handle", offsets.handle_get_type_from_handle);
+    if (offsets.image_name == UINTPTR_MAX) offsets.image_name = findImageName(module); log_progress("image_name", offsets.image_name);
+
+    if (offsets.class_get_name == UINTPTR_MAX) offsets.class_get_name = findClassGetName(module); log_progress("class_get_name", offsets.class_get_name);
+    if (offsets.class_get_parent == UINTPTR_MAX) offsets.class_get_parent = findClassGetParent(module); log_progress("class_get_parent", offsets.class_get_parent);
+    if (offsets.class_get_fields == UINTPTR_MAX) offsets.class_get_fields = findClassGetFields(module); log_progress("class_get_fields", offsets.class_get_fields);
+    if (offsets.class_get_properties == UINTPTR_MAX) offsets.class_get_properties = findClassGetProperties(module); log_progress("class_get_properties", offsets.class_get_properties);
+    if (offsets.class_get_methods == UINTPTR_MAX) offsets.class_get_methods = findClassGetMethods(module); log_progress("class_get_methods", offsets.class_get_methods);
+    if (offsets.class_type == UINTPTR_MAX) offsets.class_type = findClassType(module); log_progress("class_type", offsets.class_type);
+    if (offsets.class_get_enum_basetype == UINTPTR_MAX) offsets.class_get_enum_basetype = findClassGetEnumBasetype(module); log_progress("class_get_enum_basetype", offsets.class_get_enum_basetype);
+    if (offsets.class_get_flags == UINTPTR_MAX) offsets.class_get_flags = findClassGetFlags(module); log_progress("class_get_flags", offsets.class_get_flags);
+    if (offsets.class_get_interfaces == UINTPTR_MAX) offsets.class_get_interfaces = findClassGetInterfaces(module); log_progress("class_get_interfaces", offsets.class_get_interfaces);
+    if (offsets.class_get_declaring_type == UINTPTR_MAX) offsets.class_get_declaring_type = findClassGetDeclaringType(module); log_progress("class_get_declaring_type", offsets.class_get_declaring_type);
+    if (offsets.class_get_is_generic == UINTPTR_MAX) offsets.class_get_is_generic = findClassGetIsGeneric(module); log_progress("class_get_is_generic", offsets.class_get_is_generic);
+
+    if (offsets.field_get_name == UINTPTR_MAX) offsets.field_get_name = findFieldGetName(module); log_progress("field_get_name", offsets.field_get_name);
+    if (offsets.field_get_offset == UINTPTR_MAX) offsets.field_get_offset = findFieldGetOffset(module); log_progress("field_get_offset", offsets.field_get_offset);
+    if (offsets.field_get_type == UINTPTR_MAX) offsets.field_get_type = findFieldGetType(module); log_progress("field_get_type", offsets.field_get_type);
+    if (offsets.field_get_default_value == UINTPTR_MAX) offsets.field_get_default_value = findFieldGetDefaultValue(module); log_progress("field_get_default_value", offsets.field_get_default_value);
+
+    if (offsets.type_get_type == UINTPTR_MAX) offsets.type_get_type = findTypeGetType(module); log_progress("type_get_type", offsets.type_get_type);
+    if (offsets.type_attrs == UINTPTR_MAX) offsets.type_attrs = findTypeAttrs(module); log_progress("type_attrs", offsets.type_attrs);
+    if (offsets.type_attrs_shift == UINTPTR_MAX) offsets.type_attrs_shift = findTypeAttrsShift(module); log_progress("type_attrs_shift", offsets.type_attrs_shift);
+    if (offsets.type_get_class_from_type == UINTPTR_MAX) offsets.type_get_class_from_type = findTypeGetClassFromType(module); log_progress("type_get_class_from_type", offsets.type_get_class_from_type);
+    if (offsets.type_get_data == UINTPTR_MAX) offsets.type_get_data = findTypeGetData(module); log_progress("type_get_data", offsets.type_get_data);
+    if (offsets.type_get_name == UINTPTR_MAX) offsets.type_get_name = findTypeGetName(module); log_progress("type_get_name", offsets.type_get_name);
+
+    if (offsets.method_get_flags == UINTPTR_MAX) offsets.method_get_flags = findMethodGetFlags(module); log_progress("method_get_flags", offsets.method_get_flags);
+    if (offsets.method_parameters_count == UINTPTR_MAX) offsets.method_parameters_count = findMethodParametersCount(module); log_progress("method_parameters_count", offsets.method_parameters_count);
+    if (offsets.method_get_parameter == UINTPTR_MAX) offsets.method_get_parameter = findMethodGetParameter(module); log_progress("method_get_parameter", offsets.method_get_parameter);
+    if (offsets.method_pointer == UINTPTR_MAX) offsets.method_pointer = findMethodPointer(module); log_progress("method_pointer", offsets.method_pointer);
+    if (offsets.method_virtual_pointer == UINTPTR_MAX) offsets.method_virtual_pointer = findMethodVirtualPointer(module); log_progress("method_virtual_pointer", offsets.method_virtual_pointer);
+    if (offsets.method_slot == UINTPTR_MAX) offsets.method_slot = findMethodSlot(module); log_progress("method_slot", offsets.method_slot);
+    if (offsets.method_get_is_generic == UINTPTR_MAX) offsets.method_get_is_generic = findMethodGetIsGeneric(module); log_progress("method_get_is_generic", offsets.method_get_is_generic);
+    if (offsets.method_get_parameter_name == UINTPTR_MAX) offsets.method_get_parameter_name = findMethodGetParameterName(module); log_progress("method_get_parameter_name", offsets.method_get_parameter_name);
+}
+
+void Memory::findIl2CppBasedOffsets(const ModuleInfo &module, const std::function<void(const char*, uintptr_t)> &log_progress) {
+    if (offsets.class_namespace == UINTPTR_MAX) offsets.class_namespace = findClassNamespace(module); log_progress("class_namespace", offsets.class_namespace);
+    if (offsets.property_name == UINTPTR_MAX) offsets.property_name = findPropertyName(module); log_progress("property_name", offsets.property_name);
+    if (offsets.property_get_method == UINTPTR_MAX) offsets.property_get_method = findPropertyGetMethod(module); log_progress("property_get_method", offsets.property_get_method);
+    if (offsets.property_set_method == UINTPTR_MAX) offsets.property_set_method = findPropertySetMethod(module); log_progress("property_set_method", offsets.property_set_method);
+    if (offsets.method_name == UINTPTR_MAX) offsets.method_name = findMethodName(module); log_progress("method_name", offsets.method_name);
+    if (offsets.method_return_type == UINTPTR_MAX) offsets.method_return_type = findMethodReturnType(module); log_progress("method_return_type", offsets.method_return_type);
 }
 
 Memory::ModuleInfo Memory::getModuleInfo(const char *name, const std::function<void(ModuleInfo)> &callback) {
@@ -340,6 +338,10 @@ bool Memory::isPtrValid(uintptr_t address) const {
     uintptr_t page_addr = address & ~(pagesize - 1);
 
     if (mincore(reinterpret_cast<void *>(page_addr), pagesize, &vec) != 0) {
+        return false;
+    }
+
+    if ((vec & 1) == 0) {
         return false;
     }
 

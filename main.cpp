@@ -13,7 +13,7 @@ int main() {
 }
 
 void __attribute__((constructor)) entry_point() {
-    std::thread([]() {
+    std::thread([=]() {
         sleep(3);
         g().log->info("Initializing dumper...");
         if (g().initialize(false)) {

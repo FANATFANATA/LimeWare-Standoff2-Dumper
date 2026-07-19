@@ -1,7 +1,3 @@
-//
-// Created by alexandr on 25.04.2026.
-//
-
 #ifndef LIMEWARE_STANDOFF2_DUMPER_LOG_H
 #define LIMEWARE_STANDOFF2_DUMPER_LOG_H
 
@@ -16,4 +12,4 @@ public:
 };
 
 
-#endif //LIMEWARE_STANDOFF2_DUMPER_LOG_H
+#endif

@@ -1,7 +1,3 @@
-//
-// Created by alexandr on 09.05.2026.
-//
-
 #ifndef LIMEWARE_STANDOFF2_DUMPER_ASSEMBLER_H
 #define LIMEWARE_STANDOFF2_DUMPER_ASSEMBLER_H
 
@@ -185,4 +181,4 @@ namespace Assembler {
 };
 
 
-#endif //LIMEWARE_STANDOFF2_DUMPER_ASSEMBLER_H
+#endif

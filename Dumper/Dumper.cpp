@@ -1,7 +1,3 @@
-//
-// Created by alexandr on 25.04.2026.
-//
-
 #include "Dumper.h"
 
 #include "LimeWare.h"
@@ -45,7 +41,7 @@ void Dumper::dump(const char *path) {
     std::ofstream dump(dump_file.c_str());
 
     for (int i = 0; i < m_vecImages.size(); i++) {
-        dump << "// Image " << i << ": " << g().il2cpp->getImageName(m_vecImages[i]) << std::endl;
+        dump << "Image " << i << ": " << g().il2cpp->getImageName(m_vecImages[i]) << std::endl;
     }
 
     dump << std::endl;
@@ -502,10 +498,14 @@ std::string Dumper::dumpClass(Il2Cpp::Class *klass) {
             result += !g().il2cpp->getMethods(klass).empty() ? "\n\t// Methods\n\n" : "";
 
             for (int method_index = 0; method_index < g().il2cpp->getMethods(klass).size(); method_index++) {
-                Il2Cpp::Method *method = g().il2cpp->getMethods(klass).at(method_index);
+                auto &methods = g().il2cpp->getMethods(klass);
+                if (method_index >= static_cast<int>(methods.size())) {
+                    break;
+                }
+                Il2Cpp::Method *method = methods.at(method_index);
                 if (g().memory->isPtrValid(reinterpret_cast<uintptr_t>(method))) {
                     result += "\t" + dumpMethod(method) + "\n";
-                    if (method_index != g().il2cpp->getMethods(klass).size() - 1) {
+                    if (method_index != static_cast<int>(methods.size()) - 1) {
                         result += "\n";
                     }
                 }

@@ -1,7 +1,3 @@
-//
-// Created by alexandr on 25.04.2026.
-//
-
 #ifndef LIMEWARE_STANDOFF2_DUMPER_DUMPER_H
 #define LIMEWARE_STANDOFF2_DUMPER_DUMPER_H
 
@@ -41,4 +37,4 @@ public:
 };
 
 
-#endif //LIMEWARE_STANDOFF2_DUMPER_DUMPER_H
+#endif
