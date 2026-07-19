@@ -7,6 +7,7 @@
 #include <cinttypes>
 #include <elf.h>
 #include <fcntl.h>
+#include <libgen.h>
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -229,7 +230,7 @@ Memory::ModuleInfo Memory::getModuleInfo(const char *name, const std::function<v
     while (fgets(line, sizeof line, f)) {
         uintptr_t tmp_base, tmp_end;
         char perms[128], path[256];
-        if (sscanf(line, "%" PRIXPTR "-%" PRIXPTR " %4s %*s %*s %*s %s", &tmp_base, &tmp_end, &perms, &path) > 0) {
+        if (sscanf(line, "%" PRIXPTR "-%" PRIXPTR " %4s %*s %*s %*s %s", &tmp_base, &tmp_end, perms, path) > 0) {
             if (!strcmp(basename(path), name)) {
                 int permissions = (perms[0] == 'r' ? (1 << 1) : 0) |
                                   (perms[1] == 'w' ? (1 << 2) : 0) |

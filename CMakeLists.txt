@@ -6,15 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 
-include(FetchContent)
-
-FetchContent_Declare(
-        kittymemoryex
-        GIT_REPOSITORY https://github.com/MJx0/KittyMemoryEx.git
-        GIT_TAG        93a07fe1527717a6da9b0dd40067e02fa626fda2
-)
-
-FetchContent_MakeAvailable(KittyMemoryEx)
+set(KITTYMEMORYEX_DIR ${CMAKE_SOURCE_DIR}/KittyMemoryEx-main)
 
 set(CORE
     Core/LimeWare.cpp
@@ -30,7 +22,7 @@ set(UTILS
 set(DUMPER
     Dumper/Dumper.cpp
 )
-file(GLOB_RECURSE KITTYMEMORYEX CONFIGURE_DEPENDS ${kittymemoryex_SOURCE_DIR}/KittyMemoryEx/*.cpp)
+file(GLOB_RECURSE KITTYMEMORYEX CONFIGURE_DEPENDS ${KITTYMEMORYEX_DIR}/KittyMemoryEx/*.cpp)
 
 add_executable(${PROJECT_NAME}
         main.cpp
@@ -46,7 +38,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
         Injection/
         Utils/
         Dumper/
-        ${kittymemoryex_SOURCE_DIR}
+        ${KITTYMEMORYEX_DIR}
 )
 
 target_link_options(${PROJECT_NAME} PRIVATE

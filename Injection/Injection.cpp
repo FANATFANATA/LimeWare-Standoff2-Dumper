@@ -48,13 +48,13 @@ bool Injection::initialize() {
     }
     m_trace = kitty_memory->trace;
 
-    return m_trace.Attach();
+    return m_trace.attach();
 }
 
 bool Injection::inject() {
-    uint64_t mmap_address = kitty_memory->findRemoteOfSymbol(local_symbol_t("mmap", reinterpret_cast<uintptr_t>(mmap)));
-    uint64_t munmap_address = kitty_memory->findRemoteOfSymbol(local_symbol_t("munmap", reinterpret_cast<uintptr_t>(munmap)));
-    uint64_t syscall_address = kitty_memory->findRemoteOfSymbol(local_symbol_t("syscall", reinterpret_cast<uintptr_t>(syscall)));
+    uint64_t mmap_address = kitty_memory->elfScanner.findRemoteSymbol("mmap", reinterpret_cast<uintptr_t>(mmap));
+    uint64_t munmap_address = kitty_memory->elfScanner.findRemoteSymbol("munmap", reinterpret_cast<uintptr_t>(munmap));
+    uint64_t syscall_address = kitty_memory->elfScanner.findRemoteSymbol("syscall", reinterpret_cast<uintptr_t>(syscall));
 
     if (!syscall_address) {
         g().log->error("syscall function not found!");
@@ -70,10 +70,11 @@ bool Injection::inject() {
         return false;
     }
 
-    uint64_t space = m_trace.callFunction(mmap_address, 6, nullptr, 512, PROT_READ | PROT_WRITE | PROT_EXEC,
+    auto space_ret = m_trace.callFunction(mmap_address, nullptr, 512, PROT_READ | PROT_WRITE | PROT_EXEC,
         MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+    uint64_t space = space_ret.result.ptr;
 
-    if (space == -1) {
+    if (space_ret.status != KT_RP_CALL_SUCCESS || space == (uint64_t)-1) {
         g().log->error("Couldn't create injection space!");
         return false;
     }
@@ -85,7 +86,7 @@ bool Injection::inject() {
         return false;
     }
 
-    uint64_t memfd_id = m_trace.callFunction(syscall_address, 3, __NR_memfd_create, space, 0);
+    uint64_t memfd_id = m_trace.callFunction(syscall_address, __NR_memfd_create, space, 0).result.ptr;
     FILE* memfd = fopen((std::string("/proc/") + std::to_string(m_pid) + std::string("/fd/") + std::to_string(memfd_id)).c_str(), "w");
     if (!memfd) {
         g().log->error("Couldn't create memfd!");
@@ -108,25 +109,25 @@ bool Injection::inject() {
     info.flags |= ANDROID_DLEXT_USE_LIBRARY_FD;
     info.library_fd = memfd_id;
 
-    const uint64_t anonymous = m_trace.callFunction(mmap_address, 6, nullptr, sizeof(info), PROT_READ | PROT_WRITE,
-        MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+    const uint64_t anonymous = m_trace.callFunction(mmap_address, nullptr, sizeof(info), PROT_READ | PROT_WRITE,
+        MAP_ANONYMOUS | MAP_PRIVATE, -1, 0).result.ptr;
     if (!anonymous) {
         g().log->error("Couldn't create space in anonymous region!");
         return false;
     }
     kitty_memory->writeMem(anonymous, &info, sizeof(info));
 
-    uint64_t dlopen_address = kitty_memory->findRemoteOfSymbol(local_symbol_t("android_dlopen_ext",
-        reinterpret_cast<uintptr_t>(android_dlopen_ext)));
+    uint64_t dlopen_address = kitty_memory->elfScanner.findRemoteSymbol("android_dlopen_ext",
+        reinterpret_cast<uintptr_t>(android_dlopen_ext));
     if (!dlopen_address) {
         g().log->error("dlopen function not found!");
         return false;
     }
 
-    uint64_t handle = m_trace.callFunction(dlopen_address, 3, space, RTLD_DEFAULT, anonymous);
+    uint64_t handle = m_trace.callFunction(dlopen_address, space, RTLD_DEFAULT, anonymous).result.ptr;
     if (!handle) {
-        if (uint64_t dlerror_address = kitty_memory->findRemoteOfSymbol(local_symbol_t("dlerror", reinterpret_cast<uintptr_t>(dlerror)))) {
-            uint64_t err = m_trace.callFunction(dlerror_address, 0);
+        if (uint64_t dlerror_address = kitty_memory->elfScanner.findRemoteSymbol("dlerror", reinterpret_cast<uintptr_t>(dlerror))) {
+            uint64_t err = m_trace.callFunction(dlerror_address).result.ptr;
             if (err) {
                 g().log->debug("dlerror: %s", kitty_memory->readMemStr(err, 128).c_str());
                 return false;
@@ -142,7 +143,7 @@ bool Injection::inject() {
 }
 
 bool Injection::shutdown() {
-    return m_trace.Detach();
+    return m_trace.detach();
 }
 
 

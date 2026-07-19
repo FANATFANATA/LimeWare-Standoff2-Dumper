@@ -1,0 +1,7 @@
+\build
+\.giga*
+\.vscode
+\default*
+\.gitignore
+*.a
+KittyMemoryEx-main.zip
