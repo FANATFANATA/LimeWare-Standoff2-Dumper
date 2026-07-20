@@ -4,7 +4,7 @@
 #include <memory>
 #include <sys/types.h>
 
-#include "KittyMemoryEx/KittyMemoryMgr.hpp"
+#include "KittyMemoryMgr.hpp"
 
 class Injection
 {

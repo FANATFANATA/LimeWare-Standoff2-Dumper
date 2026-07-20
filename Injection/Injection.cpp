@@ -3,7 +3,7 @@
 #include "LimeWare.h"
 
 #include <thread>
-#include <KittyMemoryEx/KittyMemOp.hpp>
+#include <KittyMemOp.hpp>
 #include <asm-generic/unistd.h>
 #include <android/dlext.h>
 #include <dlfcn.h>

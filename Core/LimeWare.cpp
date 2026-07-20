@@ -1,5 +1,5 @@
 #include "LimeWare.h"
-#include <KittyMemoryEx/KittyMemOp.hpp>
+#include <KittyMemOp.hpp>
 
 bool LimeWare::initialize(bool inject)
 {
